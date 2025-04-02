@@ -19,7 +19,6 @@ if uploaded_file:
     supplier = col3.selectbox("Supplier", ["Todos"] + sorted(df['SUPPLIER'].dropna().unique().tolist()))
     product = col4.selectbox("Product", ["Todos"] + sorted(df['PRODUCT'].dropna().unique().tolist()))
 
-    # Manejo seguro de columna de ubicación
     if hoja.lower() == "directo" and "TIENDA" in df.columns:
         location_field = "TIENDA"
     elif hoja.lower() == "centralizado" and "CEDIS Entrega" in df.columns:
@@ -72,11 +71,26 @@ if uploaded_file:
 
         df['COMPRA UMI'] = df.apply(compra_umi, axis=1)
         df['DOH COMPRA'] = df['COMPRA'] / df['VENTA REAL PROM']
-        df['DOH TOTAL'] = (df['TTL INV'] + df['COMPRA']) / df['VENTA REAL PROM']
+        df['DOH ACTUAL'] = (df['TTL INV'] + df['COMPRA']) / df['VENTA REAL PROM']
         st.success("Valores recalculados exitosamente.")
 
+        # Agregar botón para descargar Excel con cambios
+        def to_excel(dataframe):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                dataframe.to_excel(writer, index=False, sheet_name='Actualizado')
+            return output.getvalue()
+
+        excel_data = to_excel(df)
+        st.download_button(
+            label="📥 Descargar archivo actualizado",
+            data=excel_data,
+            file_name="SOP_actualizado.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
     mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH TOTAL'] if location_field else [
+                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
                     'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH TOTAL']
+                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
     st.dataframe(df_filtro[mostrar_cols], use_container_width=True)
