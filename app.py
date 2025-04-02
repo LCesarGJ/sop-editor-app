@@ -59,7 +59,7 @@ if uploaded_file:
                 cond &= df[location_field] == row[location_field]
             df.loc[cond, 'DOH_TARGET'] = row['DOH_TARGET']
 
-        # Cálculos actualizados
+        # Recalcular columnas
         df['INV TARGET'] = df['DOH_TARGET'] * df['VENTA REAL PROM']
         df['COMPRA'] = df['INV TARGET'] - df['TTL INV']
         df['COMPRA'] = df['COMPRA'].apply(lambda x: max(0, x))
@@ -76,27 +76,22 @@ if uploaded_file:
 
         st.success("Valores recalculados exitosamente.")
 
-        # Mostrar tabla final
+        # Aplicar nuevamente los filtros después del recálculo
+        df_filtro_actualizado = df.copy()
+        if depto != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['DEPARTMENT'] == depto]
+        if category != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['CATEGORY'] == category]
+        if supplier != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['SUPPLIER'] == supplier]
+        if product != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['PRODUCT'] == product]
+        if location_field and location != "Todos":
+            df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado[location_field] == location]
+
         mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
                         'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
-        # Aplicar nuevamente los filtros después del recálculo
 
-df_filtro_actualizado = df.copy()
-if depto != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['DEPARTMENT'] == depto]
-if category != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['CATEGORY'] == category]
-if supplier != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['SUPPLIER'] == supplier]
-if product != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['PRODUCT'] == product]
-if location_field and location != "Todos":
-    df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado[location_field] == location]
+        st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
 
-# Mostrar tabla con filtros aplicados después de recálculo
-st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
-
-
-
-        # Botón para descargar
         def to_excel(dataframe):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
