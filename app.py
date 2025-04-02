@@ -41,7 +41,17 @@ if uploaded_file:
         df_filtro = df_filtro[df_filtro[location_field] == location]
 
     st.markdown("### Edita la columna DOH_TARGET")
-    editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT', 'DOH_TARGET', 'VENTA REAL PROM']
+    editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT']
+
+    # Insertar columnas específicas según hoja
+    if hoja.lower() == "centralizado":
+        central_cols = ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
+        editable_cols.extend(central_cols)
+    elif hoja.lower() == "directo":
+        directo_cols = ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
+        editable_cols.extend(directo_cols)
+
+    editable_cols.extend(['DOH_TARGET', 'VENTA REAL PROM'])
     if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
 
@@ -59,7 +69,6 @@ if uploaded_file:
                 cond &= df[location_field] == row[location_field]
             df.loc[cond, 'DOH_TARGET'] = row['DOH_TARGET']
 
-        # Recalcular columnas
         df['INV TARGET'] = df['DOH_TARGET'] * df['VENTA REAL PROM']
         df['COMPRA'] = df['INV TARGET'] - df['TTL INV']
         df['COMPRA'] = df['COMPRA'].apply(lambda x: max(0, x))
@@ -73,10 +82,10 @@ if uploaded_file:
         df['COMPRA UMI'] = df.apply(compra_umi, axis=1)
         df['DOH COMPRA'] = df['COMPRA'] / df['VENTA REAL PROM']
         df['DOH ACTUAL'] = (df['TTL INV'] + df['COMPRA']) / df['VENTA REAL PROM']
+        df['DOH FINALES'] = df['DOH COMPRA'] + df['DOH ACTUAL']
 
         st.success("Valores recalculados exitosamente.")
 
-        # Aplicar nuevamente los filtros después del recálculo
         df_filtro_actualizado = df.copy()
         if depto != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['DEPARTMENT'] == depto]
         if category != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['CATEGORY'] == category]
@@ -85,10 +94,15 @@ if uploaded_file:
         if location_field and location != "Todos":
             df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado[location_field] == location]
 
-        mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                        'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
-                        'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                        'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
+        mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT'] if location_field else [
+                        'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT']
+
+        if hoja.lower() == "centralizado":
+            mostrar_cols += ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
+        elif hoja.lower() == "directo":
+            mostrar_cols += ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
+
+        mostrar_cols += ['DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH ACTUAL', 'DOH COMPRA', 'DOH FINALES']
 
         st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
 
