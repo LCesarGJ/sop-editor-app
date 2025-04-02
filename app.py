@@ -19,20 +19,31 @@ if uploaded_file:
     supplier = col3.selectbox("Supplier", ["Todos"] + sorted(df['SUPPLIER'].dropna().unique().tolist()))
     product = col4.selectbox("Product", ["Todos"] + sorted(df['PRODUCT'].dropna().unique().tolist()))
 
-    location_field = "TIENDA" if hoja.lower() == "directo" else "CEDIS ENTREGA"
-    location_values = ["Todos"] + sorted(df[location_field].dropna().unique().tolist())
-    location = col5.selectbox(location_field, location_values)
+    # Manejo seguro de columna de ubicación
+    if hoja.lower() == "directo" and "TIENDA" in df.columns:
+        location_field = "TIENDA"
+    elif hoja.lower() == "centralizado" and "CEDIS Entrega" in df.columns:
+        location_field = "CEDIS Entrega"
+    else:
+        location_field = None
+
+    if location_field:
+        location_values = ["Todos"] + sorted(df[location_field].dropna().unique().tolist())
+        location = col5.selectbox(location_field, location_values)
+    else:
+        location = "Todos"
 
     df_filtro = df.copy()
     if depto != "Todos": df_filtro = df_filtro[df_filtro['DEPARTMENT'] == depto]
     if category != "Todos": df_filtro = df_filtro[df_filtro['CATEGORY'] == category]
     if supplier != "Todos": df_filtro = df_filtro[df_filtro['SUPPLIER'] == supplier]
     if product != "Todos": df_filtro = df_filtro[df_filtro['PRODUCT'] == product]
-    if location != "Todos": df_filtro = df_filtro[df_filtro[location_field] == location]
+    if location_field and location != "Todos":
+        df_filtro = df_filtro[df_filtro[location_field] == location]
 
     st.markdown("### Edita la columna DOH_TARGET")
     editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT', 'DOH_TARGET', 'VENTA REAL PROM']
-    if location_field not in editable_cols:
+    if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
 
     df_edit = st.data_editor(df_filtro[editable_cols], num_rows="dynamic", use_container_width=True, key="editor")
@@ -65,5 +76,7 @@ if uploaded_file:
         st.success("Valores recalculados exitosamente.")
 
     mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
+                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH TOTAL'] if location_field else [
+                    'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
                     'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH TOTAL']
     st.dataframe(df_filtro[mostrar_cols], use_container_width=True)
