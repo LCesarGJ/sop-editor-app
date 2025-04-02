@@ -43,7 +43,6 @@ if uploaded_file:
     st.markdown("### Edita la columna DOH_TARGET")
     editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT']
 
-    # Insertar columnas específicas según hoja
     if hoja.lower() == "centralizado":
         central_cols = ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
         editable_cols.extend(central_cols)
@@ -81,7 +80,7 @@ if uploaded_file:
 
         df['COMPRA UMI'] = df.apply(compra_umi, axis=1)
         df['DOH COMPRA'] = df['COMPRA'] / df['VENTA REAL PROM']
-        df['DOH ACTUAL'] = (df['TTL INV'] + df['COMPRA']) / df['VENTA REAL PROM']
+        df['DOH ACTUAL'] = df['TTL INV'] / df['VENTA REAL PROM']
         df['DOH FINALES'] = df['DOH COMPRA'] + df['DOH ACTUAL']
 
         st.success("Valores recalculados exitosamente.")
