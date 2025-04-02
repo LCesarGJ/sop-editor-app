@@ -81,7 +81,8 @@ if uploaded_file:
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
                         'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
-        st.dataframe(df[mostrar_cols], use_container_width=True)
+        st.dataframe(df_filtro[mostrar_cols], use_container_width=True)
+
 
         # Botón para descargar
         def to_excel(dataframe):
