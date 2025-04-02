@@ -59,6 +59,7 @@ if uploaded_file:
                 cond &= df[location_field] == row[location_field]
             df.loc[cond, 'DOH_TARGET'] = row['DOH_TARGET']
 
+        # Cálculos actualizados
         df['INV TARGET'] = df['DOH_TARGET'] * df['VENTA REAL PROM']
         df['COMPRA'] = df['INV TARGET'] - df['TTL INV']
         df['COMPRA'] = df['COMPRA'].apply(lambda x: max(0, x))
@@ -72,9 +73,17 @@ if uploaded_file:
         df['COMPRA UMI'] = df.apply(compra_umi, axis=1)
         df['DOH COMPRA'] = df['COMPRA'] / df['VENTA REAL PROM']
         df['DOH ACTUAL'] = (df['TTL INV'] + df['COMPRA']) / df['VENTA REAL PROM']
+
         st.success("Valores recalculados exitosamente.")
 
-        # Agregar botón para descargar Excel con cambios
+        # Mostrar tabla final
+        mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
+                        'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
+                        'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
+                        'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
+        st.dataframe(df[mostrar_cols], use_container_width=True)
+
+        # Botón para descargar
         def to_excel(dataframe):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -88,9 +97,3 @@ if uploaded_file:
             file_name="SOP_actualizado.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
-    mostrar_cols = [location_field, 'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
-                    'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
-                    'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
-    st.dataframe(df_filtro[mostrar_cols], use_container_width=True)
