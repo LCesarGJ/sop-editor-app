@@ -81,7 +81,19 @@ if uploaded_file:
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL'] if location_field else [
                         'DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT',
                         'DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH COMPRA', 'DOH ACTUAL']
-        st.dataframe(df_filtro[mostrar_cols], use_container_width=True)
+        # Aplicar nuevamente los filtros después del recálculo
+
+df_filtro_actualizado = df.copy()
+if depto != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['DEPARTMENT'] == depto]
+if category != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['CATEGORY'] == category]
+if supplier != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['SUPPLIER'] == supplier]
+if product != "Todos": df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado['PRODUCT'] == product]
+if location_field and location != "Todos":
+    df_filtro_actualizado = df_filtro_actualizado[df_filtro_actualizado[location_field] == location]
+
+# Mostrar tabla con filtros aplicados después de recálculo
+st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
+
 
 
         # Botón para descargar
