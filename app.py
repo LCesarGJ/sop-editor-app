@@ -34,6 +34,10 @@ if uploaded_file:
     else:
         location = "Todos"
 
+    # Botón para quitar todos los filtros
+    if st.button("🔄 Limpiar filtros"):
+        depto = category = supplier = product = location = "Todos"
+
     df_filtro = df.copy()
     if depto != "Todos": df_filtro = df_filtro[df_filtro['DEPARTMENT'] == depto]
     if category != "Todos": df_filtro = df_filtro[df_filtro['CATEGORY'] == category]
@@ -54,10 +58,20 @@ if uploaded_file:
     if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
 
-    # Validación: asegurar que solo se incluyan columnas que existen en el DataFrame
     editable_cols = [col for col in editable_cols if col in df_filtro.columns]
 
-    df_edit = st.data_editor(df_filtro[editable_cols], num_rows="dynamic", use_container_width=True, key="editor")
+    # Estilo visual: color verde claro en DOH_TARGET
+    def style_editable(df_display):
+        return df_display.style.applymap(
+            lambda v: 'background-color: lightgreen;', subset=['DOH_TARGET']
+        ) if 'DOH_TARGET' in df_display.columns else df_display
+
+    df_edit = st.data_editor(
+        df_filtro[editable_cols],
+        num_rows="dynamic",
+        use_container_width=True,
+        key="editor"
+    )
 
     if st.button("Recalcular y actualizar"):
         for _, row in df_edit.iterrows():
