@@ -11,7 +11,6 @@ if uploaded_file:
     hojas_editables = {name: df.copy() for name, df in sheets.items()}
     hoja = st.selectbox("Selecciona hoja", list(hojas_editables.keys()))
 
-    # Cargar df general desde session_state o del archivo
     if 'df_actualizado' not in st.session_state:
         st.session_state.df_actualizado = hojas_editables[hoja].copy()
     df = st.session_state.df_actualizado
@@ -45,17 +44,18 @@ if uploaded_file:
 
     st.markdown("### Edita la columna DOH_TARGET")
     editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT']
-
     if hoja.lower() == "centralizado":
         editable_cols += ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
     elif hoja.lower() == "directo":
         editable_cols += ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
-
     editable_cols += ['DOH_TARGET', 'VENTA REAL PROM']
     if "IS_OUT_OF_STOCK" in df.columns:
         editable_cols.append("IS_OUT_OF_STOCK")
     if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
+
+    # Validación: asegurar que solo se incluyan columnas que existen en el DataFrame
+    editable_cols = [col for col in editable_cols if col in df_filtro.columns]
 
     df_edit = st.data_editor(df_filtro[editable_cols], num_rows="dynamic", use_container_width=True, key="editor")
 
@@ -86,7 +86,6 @@ if uploaded_file:
         df['DOH ACTUAL'] = df['TTL INV'] / df['VENTA REAL PROM']
         df['DOH FINALES'] = df['DOH COMPRA'] + df['DOH ACTUAL']
 
-        # Actualizar en session_state
         st.session_state.df_actualizado = df.copy()
 
         st.success("Valores recalculados exitosamente.")
