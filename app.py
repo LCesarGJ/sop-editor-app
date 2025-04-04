@@ -109,9 +109,10 @@ if uploaded_file:
 
         st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
 
-        # Resumen por proveedor
-        if all(col in df.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
-            resumen = df.groupby('SUPPLIER').agg({
+        # Resumen por proveedor con filtros aplicados
+        df_resumen = df_filtro_actualizado.copy()
+        if all(col in df_resumen.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
+            resumen = df_resumen.groupby('SUPPLIER').agg({
                 'IS_OUT_OF_STOCK': 'sum',
                 'DOH ACTUAL': 'mean',
                 'DOH COMPRA': 'mean'
@@ -123,7 +124,7 @@ if uploaded_file:
                 'DOH COMPRA': 'DOH COMPRA',
                 'DOH FINALES': 'DOH FINALES'
             }, inplace=True)
-            st.markdown("### Resumen por proveedor")
+            st.markdown("### Resumen por proveedor (filtrado)")
             st.dataframe(resumen, use_container_width=True)
 
         def to_excel(dataframe):
