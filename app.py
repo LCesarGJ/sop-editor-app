@@ -51,12 +51,24 @@ if uploaded_file:
         editable_cols.extend(directo_cols)
 
     editable_cols.extend(['DOH_TARGET', 'VENTA REAL PROM'])
+    if "IS_OUT_OF_STOCK" in df.columns:
+        editable_cols.append("IS_OUT_OF_STOCK")
     if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
 
-    df_edit = st.data_editor(df_filtro[editable_cols], num_rows="dynamic", use_container_width=True, key="editor")
+    # Agregar estilo visual para DOH_TARGET
+    edited_style = lambda col: {col: {"backgroundColor": "#d0f0c0"}} if col == "DOH_TARGET" else {}
+    st.data_editor(
+        df_filtro[editable_cols],
+        num_rows="dynamic",
+        use_container_width=True,
+        key="editor",
+        column_config={"DOH_TARGET": st.column_config.Column("DOH_TARGET", help="Editar valor objetivo")},
+        disabled=[col for col in editable_cols if col != "DOH_TARGET"]
+    )
 
     if st.button("Recalcular y actualizar"):
+        df_edit = st.session_state.editor
         for _, row in df_edit.iterrows():
             cond = (
                 (df['DEPARTMENT'] == row['DEPARTMENT']) &
@@ -102,8 +114,27 @@ if uploaded_file:
             mostrar_cols += ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
 
         mostrar_cols += ['DOH_TARGET', 'VENTA REAL PROM', 'COMPRA', 'COMPRA UMI', 'DOH ACTUAL', 'DOH COMPRA', 'DOH FINALES']
+        if "IS_OUT_OF_STOCK" in df.columns:
+            mostrar_cols.append("IS_OUT_OF_STOCK")
 
         st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
+
+        # Resumen por proveedor
+        if all(col in df.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
+            resumen = df.groupby('SUPPLIER').agg({
+                'IS_OUT_OF_STOCK': 'sum',
+                'DOH ACTUAL': 'mean',
+                'DOH COMPRA': 'mean'
+            }).reset_index()
+            resumen['DOH FINALES'] = resumen['DOH ACTUAL'] + resumen['DOH COMPRA']
+            resumen.rename(columns={
+                'IS_OUT_OF_STOCK': 'IS_OUT_OF_STOCK',
+                'DOH ACTUAL': 'DOH TIENDAS',
+                'DOH COMPRA': 'DOH COMPRA',
+                'DOH FINALES': 'DOH FINALES'
+            }, inplace=True)
+            st.markdown("### Resumen por proveedor")
+            st.dataframe(resumen, use_container_width=True)
 
         def to_excel(dataframe):
             output = BytesIO()
