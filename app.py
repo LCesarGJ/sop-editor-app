@@ -9,9 +9,12 @@ uploaded_file = st.file_uploader("Carga el archivo S&OP", type=["xlsx"])
 if uploaded_file:
     sheets = pd.read_excel(uploaded_file, sheet_name=None)
     hojas_editables = {name: df.copy() for name, df in sheets.items()}
-
     hoja = st.selectbox("Selecciona hoja", list(hojas_editables.keys()))
-    df = hojas_editables[hoja]
+
+    # Cargar df general desde session_state o del archivo
+    if 'df_actualizado' not in st.session_state:
+        st.session_state.df_actualizado = hojas_editables[hoja].copy()
+    df = st.session_state.df_actualizado
 
     col1, col2, col3, col4, col5 = st.columns(5)
     depto = col1.selectbox("Department", ["Todos"] + sorted(df['DEPARTMENT'].dropna().unique().tolist()))
@@ -44,13 +47,11 @@ if uploaded_file:
     editable_cols = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT']
 
     if hoja.lower() == "centralizado":
-        central_cols = ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
-        editable_cols.extend(central_cols)
+        editable_cols += ['INV + TRANSIT', 'CEDIS_ORDERED_UNITS', 'INV ALMACEN', 'TTL INV']
     elif hoja.lower() == "directo":
-        directo_cols = ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
-        editable_cols.extend(directo_cols)
+        editable_cols += ['INV TIENDA', 'TRANSITO', 'INV + TRANSIT']
 
-    editable_cols.extend(['DOH_TARGET', 'VENTA REAL PROM'])
+    editable_cols += ['DOH_TARGET', 'VENTA REAL PROM']
     if "IS_OUT_OF_STOCK" in df.columns:
         editable_cols.append("IS_OUT_OF_STOCK")
     if location_field and location_field not in editable_cols:
@@ -85,6 +86,9 @@ if uploaded_file:
         df['DOH ACTUAL'] = df['TTL INV'] / df['VENTA REAL PROM']
         df['DOH FINALES'] = df['DOH COMPRA'] + df['DOH ACTUAL']
 
+        # Actualizar en session_state
+        st.session_state.df_actualizado = df.copy()
+
         st.success("Valores recalculados exitosamente.")
 
         df_filtro_actualizado = df.copy()
@@ -109,10 +113,8 @@ if uploaded_file:
 
         st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
 
-        # Resumen por proveedor con filtros aplicados
-        df_resumen = df_filtro_actualizado.copy()
-        if all(col in df_resumen.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
-            resumen = df_resumen.groupby('SUPPLIER').agg({
+        if all(col in df.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
+            resumen = df_filtro_actualizado.groupby('SUPPLIER').agg({
                 'IS_OUT_OF_STOCK': 'sum',
                 'DOH ACTUAL': 'mean',
                 'DOH COMPRA': 'mean'
