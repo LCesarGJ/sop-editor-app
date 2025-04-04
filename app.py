@@ -56,19 +56,9 @@ if uploaded_file:
     if location_field and location_field not in editable_cols:
         editable_cols.insert(0, location_field)
 
-    # Agregar estilo visual para DOH_TARGET
-    edited_style = lambda col: {col: {"backgroundColor": "#d0f0c0"}} if col == "DOH_TARGET" else {}
-    st.data_editor(
-        df_filtro[editable_cols],
-        num_rows="dynamic",
-        use_container_width=True,
-        key="editor",
-        column_config={"DOH_TARGET": st.column_config.Column("DOH_TARGET", help="Editar valor objetivo")},
-        disabled=[col for col in editable_cols if col != "DOH_TARGET"]
-    )
+    df_edit = st.data_editor(df_filtro[editable_cols], num_rows="dynamic", use_container_width=True, key="editor")
 
     if st.button("Recalcular y actualizar"):
-        df_edit = st.session_state.editor
         for _, row in df_edit.iterrows():
             cond = (
                 (df['DEPARTMENT'] == row['DEPARTMENT']) &
@@ -76,7 +66,7 @@ if uploaded_file:
                 (df['SUPPLIER'] == row['SUPPLIER']) &
                 (df['PRODUCT'] == row['PRODUCT'])
             )
-            if location_field in row:
+            if location_field and location_field in row:
                 cond &= df[location_field] == row[location_field]
             df.loc[cond, 'DOH_TARGET'] = row['DOH_TARGET']
 
