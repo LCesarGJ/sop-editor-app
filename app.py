@@ -34,7 +34,6 @@ if uploaded_file:
     else:
         location = "Todos"
 
-    # Botón para quitar todos los filtros
     if st.button("🔄 Limpiar filtros"):
         depto = category = supplier = product = location = "Todos"
 
@@ -60,7 +59,6 @@ if uploaded_file:
 
     editable_cols = [col for col in editable_cols if col in df_filtro.columns]
 
-    # Estilo visual: color verde claro en DOH_TARGET
     def style_editable(df_display):
         return df_display.style.applymap(
             lambda v: 'background-color: lightgreen;', subset=['DOH_TARGET']
@@ -124,7 +122,8 @@ if uploaded_file:
         if "IS_OUT_OF_STOCK" in df.columns:
             mostrar_cols.append("IS_OUT_OF_STOCK")
 
-        st.dataframe(df_filtro_actualizado[mostrar_cols], use_container_width=True)
+        cols_seguras = [col for col in mostrar_cols if col in df_filtro_actualizado.columns]
+        st.dataframe(df_filtro_actualizado[cols_seguras], use_container_width=True)
 
         if all(col in df.columns for col in ['SUPPLIER', 'IS_OUT_OF_STOCK', 'DOH ACTUAL', 'DOH COMPRA']):
             resumen = df_filtro_actualizado.groupby('SUPPLIER').agg({
