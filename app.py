@@ -15,6 +15,13 @@ if uploaded_file:
         st.session_state.df_actualizado = hojas_editables[hoja].copy()
     df = st.session_state.df_actualizado
 
+    # Validación de columnas mínimas requeridas
+    columnas_requeridas = ['DEPARTMENT', 'CATEGORY', 'SUPPLIER', 'PRODUCT', 'DOH_TARGET', 'VENTA REAL PROM']
+    faltantes = [col for col in columnas_requeridas if col not in df.columns]
+    if faltantes:
+        st.error(f"❌ El archivo cargado no contiene las siguientes columnas necesarias: {', '.join(faltantes)}")
+        st.stop()
+
     col1, col2, col3, col4, col5 = st.columns(5)
     depto = col1.selectbox("Department", ["Todos"] + sorted(df['DEPARTMENT'].dropna().unique().tolist()))
     category = col2.selectbox("Category", ["Todos"] + sorted(df['CATEGORY'].dropna().unique().tolist()))
